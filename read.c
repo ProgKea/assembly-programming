@@ -10,6 +10,5 @@ int main(void)
     char *buffer = malloc(4);
     read(file, buffer, 4);
     printf("%s\n", buffer);
-
     return 0;
 }

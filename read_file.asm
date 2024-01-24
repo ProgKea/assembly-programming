@@ -1,36 +1,50 @@
-format ELF64 executable
+format ELF64 executable 3
 entry start
 
-include 'common.inc'
-
-macro read file_descriptor, buffer, count {
-    syscall 0, buffer, count
-}
-
-macro write file_descriptor, buffer, count {
-    syscall 1, file_descriptor, buffer, count
-}
-
-macro open filename, flags, mode {
-    syscall 2, filename, flags, mode
-}
-
-macro close file_descriptor {
-    syscall 3, file_descriptor
-}
-
-macro exit code {
-    syscall 60, code
-}
+READ = 0
+WRITE = 1
+OPEN = 2
+MMAP = 9
+EXIT = 60
 
 segment writeable executable
 start:
-    open filename, 0
-    read 3, buffer, 4
-    close 3
-    write 1, buffer, 4
-    exit 0
+   ;; Allocate memory
+   mov r10, 0x22
+   mov rdx, 3
+   mov rsi, 4
+   xor rdi, rdi
+   mov rax, MMAP
+   syscall
 
-segment readable writable
-buffer db 4
+   mov r13, rax
+
+   ;; Open File Descriptor
+   xor rsi, rsi ; O_RDONLY
+   mov rdi, filename
+   mov rax, OPEN
+   syscall
+
+   ;; Read into buffer
+   mov rdx, 4
+   mov rsi, r13
+   mov rdi, rax
+   xor rax, rax
+   syscall
+
+   ;; Write buffer to stdout
+   mov rdx, 4
+   mov rsi, r13
+   mov rdi, 1
+   mov rax, WRITE
+   syscall
+
+   xor rdi, rdi
+   mov rax, EXIT
+   syscall
+
+segment readable writeable
 filename db "input.txt", 0
+msg db "Hello, World", 0xa
+msg_len = $-msg
+buffer db 4
